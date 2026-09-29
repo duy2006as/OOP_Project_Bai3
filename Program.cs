@@ -1,3 +1,6 @@
+// Mã số sinh viên: 202418887
+// Họ và tên: Hoàng Đình Duy
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -88,7 +91,7 @@ public class Employee
 
     public virtual void displayInfo()
     {
-        Console.WriteLine($"[{this.GetType().Name}] Mã NS: {Id}, Họ tên: {FullName}, Lương CB: {BaseSalary}");
+        Console.WriteLine($"[Employee] Mã NS: {Id}, Họ tên: {FullName}, Lương CB: {BaseSalary}");
     }
 
     ~Employee()
@@ -145,7 +148,7 @@ public class SoftwareEngineer : Employee
 
     public override void displayInfo()
     {
-        Console.WriteLine($"[{this.GetType().Name}] Mã NS: {Id}, Họ tên: {FullName}, Lương CB: {BaseSalary}, Ngôn ngữ: {PrimaryLanguage}, Phụ cấp: {TechnicalAllowance}");
+        Console.WriteLine($"[SoftwareEngineer] Mã NS: {Id}, Họ tên: {FullName}, Lương CB: {BaseSalary}, Ngôn ngữ: {PrimaryLanguage}, Phụ cấp: {TechnicalAllowance}");
     }
 
     ~SoftwareEngineer()
@@ -218,27 +221,14 @@ public class ProjectTeam
     {
         if (employee == null) throw new ArgumentNullException(nameof(employee), "Nhân sự không được null.");
         
-        Employee? existing = _members.FirstOrDefault(m => m.Id == employee.Id);
-
-        if (existing != null)
-        {
-            // Trùng ID nhưng khác thực thể (instance) -> Tức là cố tình add 1 người mới nhưng lấy mã của người cũ
-            if (!ReferenceEquals(existing, employee))
-            {
-                Console.WriteLine($"[LỖI] Mã nhân sự {employee.Id} đang được sử dụng bởi người khác trong nhóm! Từ chối thêm.");
-                return false; 
-            }
-            
-            // Trùng ID và cùng 1 thực thể (chỉ muốn thăng chức cho người đang ở trong nhóm)
-            if (!makeLeader)
-            {
-                Console.WriteLine($"Nhân sự {employee.Id} đã có trong nhóm.");
-                return false;
-            }
-        }
-        else
+        if (!contains(employee.Id))
         {
             _members.Add(employee);
+        }
+        else if (!makeLeader)
+        {
+            Console.WriteLine($"Nhân sự {employee.Id} đã có trong nhóm.");
+            return false;
         }
 
         if (makeLeader)
@@ -305,13 +295,11 @@ public class ProjectTeam
 
 public class Program
 {
-    // Kho lưu trữ TẤT CẢ nhân sự
-    static List<Employee> allEmployees = new List<Employee>();
-    
-    // Kho lưu trữ TẤT CẢ nhóm dự án
-    static List<ProjectTeam> allTeams = new List<ProjectTeam>();
-    
-    static Employee? sharedEmpForStep15; // Dùng để xác nhận nhân viên sống sót ở bước 15
+    static Employee? emp1;
+    static Employee? emp2;
+    static SoftwareEngineer? se1;
+    static SoftwareEngineer? se2;
+    static ProjectTeam? team1;
 
     public static void Main()
     {
@@ -319,26 +307,26 @@ public class Program
         while (isRunning)
         {
             Console.WriteLine("\n================= MENU KIỂM THỬ ==================");
-            Console.WriteLine("1.  Tạo 2 Employee bằng 2 constructor khác nhau");
-            Console.WriteLine("2.  Tạo 2 SoftwareEngineer bằng 2 constructor khác nhau");
-            Console.WriteLine("3.  Tăng lương nhân sự bằng số tiền cố định");
-            Console.WriteLine("4.  Tăng lương nhân sự theo %");
-            Console.WriteLine("5.  Tạo nhóm dự án mới");
+            Console.WriteLine("1.  Tạo 2 Employee (2 constructor khác nhau)");
+            Console.WriteLine("2.  Tạo 2 SoftwareEngineer (2 constructor khác nhau)");
+            Console.WriteLine("3.  Tăng lương nhân sự (số tiền cố định)");
+            Console.WriteLine("4.  Tăng lương nhân sự (theo %)");
+            Console.WriteLine("5.  Tạo nhóm dự án không có trưởng nhóm");
             Console.WriteLine("6.  Thêm nhân sự vào nhóm");
-            Console.WriteLine("7.  Tạo thêm 1 kỹ sư và thêm làm Trưởng nhóm");
-            Console.WriteLine("8.  Thử thêm lại thành viên đã tồn tại vào nhóm");
-            Console.WriteLine("9.  Hiển thị danh sách nhóm");
-            Console.WriteLine("10. Tính tổng chi phí nhân sự hằng tháng của 1 nhóm");
-            Console.WriteLine("11. Thử xóa trưởng nhóm hiện tại");
+            Console.WriteLine("7.  Thêm kỹ sư làm trưởng nhóm");
+            Console.WriteLine("8.  Thử thêm lại thành viên đã tồn tại");
+            Console.WriteLine("9.  Hiển thị danh sách nhóm (kiểm tra đa hình)");
+            Console.WriteLine("10. Tính tổng chi phí nhân sự hằng tháng");
+            Console.WriteLine("11. Thử xóa trưởng nhóm hiện tại (sẽ bị từ chối)");
             Console.WriteLine("12. Đổi trưởng nhóm rồi xóa cựu trưởng nhóm");
-            Console.WriteLine("13. Tạo nhóm mới và chia sẻ thành viên");
-            Console.WriteLine("14. Hủy một nhóm dự án");
-            Console.WriteLine("15. Kiểm tra nhân sự sau khi nhóm bị hủy");
+            Console.WriteLine("13. Tạo nhóm 2 và chia sẻ thành viên từ nhóm 1");
+            Console.WriteLine("14. Hủy nhóm 2 (mô phỏng kết thúc khối lệnh)");
+            Console.WriteLine("15. Kiểm tra nhân sự sau khi nhóm 2 bị hủy");
             Console.WriteLine("0.  Thoát chương trình");
             Console.WriteLine("==================================================");
             Console.Write("Mời bạn chọn chức năng (0-15): ");
             
-            string? choice = Console.ReadLine();
+            string choice = Console.ReadLine();
             Console.WriteLine();
             
             try
@@ -384,306 +372,157 @@ public class Program
 
     static string GetInput(string prompt, string defaultValue = "")
     {
-        Console.Write($"{prompt}{(string.IsNullOrEmpty(defaultValue) ? "" : $" [{defaultValue}]")}: ");
+        Console.Write($"{prompt} {(string.IsNullOrEmpty(defaultValue) ? "" : $"[{defaultValue}] ")}: ");
         string? input = Console.ReadLine();
-
-        // Hỗ trợ người dùng nhập "" hoặc "   " để cố tình test trường hợp biên (chuỗi rỗng)
-        if (input != null && input.StartsWith("\"") && input.EndsWith("\"") && input.Length >= 2)
-        {
-            return input.Substring(1, input.Length - 2); 
-        }
-
         return string.IsNullOrWhiteSpace(input) ? defaultValue : input!;
-    }
-
-    static Employee? SelectEmployee(string promptMsg = "Chọn nhân sự")
-    {
-        if (allEmployees.Count == 0)
-        {
-            Console.WriteLine("Chưa có nhân sự nào được tạo. Vui lòng chạy Bước 1 hoặc Bước 2 trước để tạo mới!");
-            return null;
-        }
-
-        Console.WriteLine("\nDanh sách TẤT CẢ nhân sự hiện có:");
-        for (int i = 0; i < allEmployees.Count; i++)
-        {
-            Console.WriteLine($"{i + 1}. [{allEmployees[i].GetType().Name}] {allEmployees[i].Id} - {allEmployees[i].FullName} (Lương CB: {allEmployees[i].BaseSalary})");
-        }
-
-        while (true)
-        {
-            string? choiceStr = GetInput($"\n{promptMsg} (1-{allEmployees.Count})", "1");
-            if (int.TryParse(choiceStr, out int choice) && choice >= 1 && choice <= allEmployees.Count)
-            {
-                return allEmployees[choice - 1];
-            }
-            Console.WriteLine("Lựa chọn không hợp lệ, vui lòng thử lại.");
-        }
-    }
-
-    static ProjectTeam? SelectTeam(string promptMsg = "Chọn nhóm dự án")
-    {
-        if (allTeams.Count == 0)
-        {
-            Console.WriteLine("Chưa có nhóm dự án nào. Vui lòng chạy Bước 5 trước để tạo nhóm!");
-            return null;
-        }
-
-        Console.WriteLine("\nDanh sách TẤT CẢ nhóm dự án hiện có:");
-        for (int i = 0; i < allTeams.Count; i++)
-        {
-            Console.WriteLine($"{i + 1}. {allTeams[i].ProjectName} ({allTeams[i].ProjectCode}) - Thành viên: {allTeams[i].calculateTotalMonthlyCost()} VNĐ/Tháng");
-        }
-
-        while (true)
-        {
-            string? choiceStr = GetInput($"\n{promptMsg} (1-{allTeams.Count})", "1");
-            if (int.TryParse(choiceStr, out int choice) && choice >= 1 && choice <= allTeams.Count)
-            {
-                return allTeams[choice - 1];
-            }
-            Console.WriteLine("Lựa chọn không hợp lệ, vui lòng thử lại.");
-        }
     }
 
     static void RunStep1()
     {
-        Console.WriteLine("--- BƯỚC 1: TẠO 2 EMPLOYEE BẰNG 2 CONSTRUCTOR KHÁC NHAU ---");
-        
-        Console.WriteLine("\n* Tạo Employee thứ nhất (Dùng constructor 2 tham số - Lương CB mặc định = 0):");
-        string id1 = GetInput("Nhập Mã NS 1", $"E{allEmployees.Count + 1:000}");
+        Console.WriteLine("--- BƯỚC 1: TẠO 2 EMPLOYEE ---");
+        Console.WriteLine("* Employee 1 (Constructor 2 tham số - Lương mặc định 0):");
+        string id1 = GetInput("Nhập Mã NS 1", "E001");
         string name1 = GetInput("Nhập Họ tên 1", "Nguyen Van A");
-        Employee e1 = new Employee(id1, name1);
-        allEmployees.Add(e1);
-        e1.displayInfo();
+        emp1 = new Employee(id1, name1);
+        emp1.displayInfo();
 
-        Console.WriteLine("\n* Tạo Employee thứ hai (Dùng constructor 3 tham số - Có truyền Lương CB):");
-        string id2 = GetInput("Nhập Mã NS 2", $"E{allEmployees.Count + 1:000}");
+        Console.WriteLine("\n* Employee 2 (Constructor 3 tham số):");
+        string id2 = GetInput("Nhập Mã NS 2", "E002");
         string name2 = GetInput("Nhập Họ tên 2", "Tran Thi B");
-        double salary2 = double.Parse(GetInput("Nhập Lương cơ bản 2", "1500"));
-        Employee e2 = new Employee(id2, name2, salary2);
-        allEmployees.Add(e2);
-        e2.displayInfo();
-        
-        Console.WriteLine("\n=> Đã tạo xong 2 Employee và đưa vào kho lưu trữ!");
+        double salary2 = double.Parse(GetInput("Nhập Lương cơ bản", "1500"));
+        emp2 = new Employee(id2, name2, salary2);
+        emp2.displayInfo();
     }
 
     static void RunStep2()
     {
-        Console.WriteLine("--- BƯỚC 2: TẠO 2 SOFTWARE ENGINEER BẰNG 2 CONSTRUCTOR KHÁC NHAU ---");
-        
-        Console.WriteLine("\n* Tạo Kỹ sư thứ nhất (Dùng constructor 3 tham số):");
-        string id1 = GetInput("Nhập Mã KS 1", $"SE{allEmployees.Count + 1:000}");
+        Console.WriteLine("--- BƯỚC 2: TẠO 2 SOFTWARE ENGINEER ---");
+        Console.WriteLine("* Kỹ sư 1 (Constructor 3 tham số):");
+        string id1 = GetInput("Nhập Mã KS 1", "SE001");
         string name1 = GetInput("Nhập Họ tên 1", "Le Van C");
         string lang1 = GetInput("Nhập Ngôn ngữ chính 1", "C#");
-        SoftwareEngineer se1 = new SoftwareEngineer(id1, name1, lang1);
-        allEmployees.Add(se1);
+        se1 = new SoftwareEngineer(id1, name1, lang1);
         se1.displayInfo();
 
-        Console.WriteLine("\n* Tạo Kỹ sư thứ hai (Dùng constructor 5 tham số):");
-        string id2 = GetInput("Nhập Mã KS 2", $"SE{allEmployees.Count + 1:000}");
+        Console.WriteLine("\n* Kỹ sư 2 (Constructor 5 tham số):");
+        string id2 = GetInput("Nhập Mã KS 2", "SE002");
         string name2 = GetInput("Nhập Họ tên 2", "Pham Thi D");
-        double salary2 = double.Parse(GetInput("Nhập Lương cơ bản 2", "2000"));
+        double salary2 = double.Parse(GetInput("Nhập Lương cơ bản", "2000"));
         string lang2 = GetInput("Nhập Ngôn ngữ chính 2", "Java");
-        double allow2 = double.Parse(GetInput("Nhập Phụ cấp 2", "500"));
-        SoftwareEngineer se2 = new SoftwareEngineer(id2, name2, salary2, lang2, allow2);
-        allEmployees.Add(se2);
+        double allow2 = double.Parse(GetInput("Nhập Phụ cấp", "500"));
+        se2 = new SoftwareEngineer(id2, name2, salary2, lang2, allow2);
         se2.displayInfo();
-        
-        Console.WriteLine("\n=> Đã tạo xong 2 Kỹ sư phần mềm và đưa vào kho lưu trữ!");
     }
 
     static void RunStep3()
     {
+        if (emp1 == null) { Console.WriteLine("Vui lòng chạy Bước 1 trước để khởi tạo Employee!"); return; }
         Console.WriteLine("--- BƯỚC 3: TĂNG LƯƠNG CỐ ĐỊNH ---");
-        Employee? target = SelectEmployee("Chọn nhân sự muốn tăng lương");
-        if (target == null) return;
-
-        Console.WriteLine("\nThông tin nhân sự đã chọn:");
-        target.displayInfo();
+        emp1.displayInfo();
         double amount = double.Parse(GetInput("Nhập số tiền muốn tăng cho nhân sự này", "200"));
-        target.increaseSalary(amount);
-        Console.WriteLine("\nSau khi tăng:");
-        target.displayInfo();
+        emp1.increaseSalary(amount);
+        Console.WriteLine("Sau khi tăng:");
+        emp1.displayInfo();
     }
 
     static void RunStep4()
     {
+        if (se2 == null) { Console.WriteLine("Vui lòng chạy Bước 2 trước để khởi tạo Kỹ sư!"); return; }
         Console.WriteLine("--- BƯỚC 4: TĂNG LƯƠNG THEO % ---");
-        Employee? target = SelectEmployee("Chọn nhân sự muốn tăng lương");
-        if (target == null) return;
-
-        Console.WriteLine("\nThông tin nhân sự đã chọn:");
-        target.displayInfo();
+        se2.displayInfo();
         double percent = double.Parse(GetInput("Nhập % muốn tăng", "10"));
-        target.increaseSalary(percent, true);
-        Console.WriteLine("\nSau khi tăng:");
-        target.displayInfo();
+        se2.increaseSalary(percent, true);
+        Console.WriteLine("Sau khi tăng:");
+        se2.displayInfo();
     }
 
     static void RunStep5()
     {
-        Console.WriteLine("--- BƯỚC 5: TẠO NHÓM DỰ ÁN MỚI ---");
-        string code = GetInput("Nhập mã dự án", "");
-        string name = GetInput("Nhập tên dự án", "");
-        ProjectTeam team = new ProjectTeam(code, name);
-        allTeams.Add(team);
-        Console.WriteLine("Đã tạo nhóm thành công và thêm vào danh sách quản lý!");
-        team.displayTeam();
+        Console.WriteLine("--- BƯỚC 5: TẠO NHÓM DỰ ÁN ---");
+        string code = GetInput("Nhập mã dự án", "P001");
+        string name = GetInput("Nhập tên dự án", "Dự án Alpha");
+        team1 = new ProjectTeam(code, name);
+        Console.WriteLine("Đã tạo nhóm thành công:");
+        team1.displayTeam();
     }
 
     static void RunStep6()
     {
+        if (team1 == null || emp1 == null) { Console.WriteLine("Vui lòng chạy Bước 1 và Bước 5 trước!"); return; }
         Console.WriteLine("--- BƯỚC 6: THÊM NHÂN SỰ VÀO NHÓM ---");
-        ProjectTeam? team = SelectTeam("Chọn nhóm muốn nhận thêm thành viên");
-        if (team == null) return;
-
-        Employee? target = SelectEmployee("Chọn nhân sự muốn thêm vào nhóm");
-        if (target == null) return;
-
-        Console.WriteLine($"Đang thêm {target.FullName} vào nhóm {team.ProjectName}...");
-        if (team.addMember(target))
+        Console.WriteLine($"Đang thêm {emp1.FullName} vào nhóm {team1.ProjectName}...");
+        if (team1.addMember(emp1))
             Console.WriteLine("Thêm thành công!");
     }
 
     static void RunStep7()
     {
-        Console.WriteLine("--- BƯỚC 7: TẠO THÊM 1 KỸ SƯ VÀ ĐẶT LÀM TRƯỞNG NHÓM ---");
-        ProjectTeam? team = SelectTeam("Chọn nhóm muốn nạp trưởng nhóm");
-        if (team == null) return;
-
-        Console.WriteLine("\n[TÌNH TRẠNG NHÓM TRƯỚC KHI THÊM LÃNH ĐẠO MỚI]");
-        team.displayTeam();
-
-        Console.WriteLine("\n* Khởi tạo Kỹ sư MỚI (Dùng constructor 5 tham số):");
-        string id = GetInput("Nhập Mã KS", $"SE{allEmployees.Count + 1:000}");
-        string name = GetInput("Nhập Họ tên", "Trưởng Nhóm Siêu Việt");
-        double salary = double.Parse(GetInput("Nhập Lương cơ bản", "3000"));
-        string lang = GetInput("Nhập Ngôn ngữ chính", "C++");
-        double allow = double.Parse(GetInput("Nhập Phụ cấp", "1000"));
-        
-        SoftwareEngineer newSE = new SoftwareEngineer(id, name, salary, lang, allow);
-        allEmployees.Add(newSE);
-        
-        Console.WriteLine($"\nĐang thêm {newSE.FullName} vào nhóm {team.ProjectName} làm trưởng nhóm...");
-        if (team.addMember(newSE, true))
-        {
-            Console.WriteLine("Tạo Kỹ sư mới và cấp quyền trưởng nhóm thành công!");
-            Console.WriteLine("\n[TÌNH TRẠNG NHÓM SAU KHI THÊM LÃNH ĐẠO MỚI]");
-            team.displayTeam();
-        }
+        if (team1 == null || se1 == null) { Console.WriteLine("Vui lòng chạy Bước 2 và Bước 5 trước!"); return; }
+        Console.WriteLine("--- BƯỚC 7: THÊM KỸ SƯ VÀ ĐẶT LÀM TRƯỞNG NHÓM ---");
+        Console.WriteLine($"Đang thêm {se1.FullName} vào nhóm {team1.ProjectName} làm trưởng nhóm...");
+        if (team1.addMember(se1, true))
+            Console.WriteLine("Thêm và cấp quyền trưởng nhóm thành công!");
     }
 
     static void RunStep8()
     {
+        if (team1 == null || emp1 == null) { Console.WriteLine("Vui lòng chạy Bước 1 và 5 trước!"); return; }
         Console.WriteLine("--- BƯỚC 8: THỬ THÊM LẠI THÀNH VIÊN ĐÃ TỒN TẠI ---");
-        ProjectTeam? team = SelectTeam("Chọn nhóm dự án để test");
-        if (team == null) return;
-
-        // Cho phép chọn trực tiếp người từ trong kho để giữ nguyên lương/thông tin
-        Employee? target = SelectEmployee("Chọn nhân sự (hãy chọn người ĐÃ CÓ trong nhóm trên)");
-        if (target == null) return;
-        
-        Console.WriteLine($"\nĐang thử thêm {target.FullName} (Mã: {target.Id}) vào nhóm làm nhân viên thường...");
-        
-        // Gọi hàm addMember 1 tham số (thêm làm nhân viên thường)
-        if (team.addMember(target))
-        {
-            Console.WriteLine("Thêm thành công!");
-        }
-        else
-        {
-            Console.WriteLine("Thêm thất bại (đã bị chặn do trùng lặp)!");
-        }
+        Console.WriteLine($"Đang thử thêm lại {emp1.FullName} (Mã: {emp1.Id})...");
+        team1.addMember(emp1);
     }
 
     static void RunStep9()
     {
+        if (team1 == null) { Console.WriteLine("Vui lòng chạy Bước 5 trước!"); return; }
         Console.WriteLine("--- BƯỚC 9: HIỂN THỊ DANH SÁCH NHÓM ---");
-        ProjectTeam? team = SelectTeam("Chọn nhóm muốn hiển thị");
-        if (team == null) return;
-
-        team.displayTeam();
+        team1.displayTeam();
     }
 
     static void RunStep10()
     {
+        if (team1 == null) { Console.WriteLine("Vui lòng chạy Bước 5 trước!"); return; }
         Console.WriteLine("--- BƯỚC 10: TÍNH TỔNG CHI PHÍ NHÂN SỰ ---");
-        ProjectTeam? team = SelectTeam("Chọn nhóm muốn tính tiền");
-        if (team == null) return;
-
-        Console.WriteLine($"Tổng chi phí hằng tháng của nhóm {team.ProjectName}: {team.calculateTotalMonthlyCost()}");
+        Console.WriteLine($"Tổng chi phí hằng tháng của nhóm {team1.ProjectName}: {team1.calculateTotalMonthlyCost()}");
     }
 
     static void RunStep11()
     {
+        if (team1 == null || team1.Leader == null) { Console.WriteLine("Vui lòng chạy Bước 5 và 7 trước (Cần có trưởng nhóm)!"); return; }
         Console.WriteLine("--- BƯỚC 11: THỬ XÓA TRƯỞNG NHÓM HIỆN TẠI ---");
-        ProjectTeam? team = SelectTeam("Chọn nhóm dự án");
-        if (team == null) return;
-
-        if (team.Leader == null)
-        {
-            Console.WriteLine("Nhóm này chưa có trưởng nhóm nên không thể test tính năng này. Hãy chạy Bước 7 trước!");
-            return;
-        }
-
-        Console.WriteLine($"Đang thử xóa trưởng nhóm {team.Leader.FullName}...");
-        team.removeMember(team.Leader.Id);
+        Console.WriteLine($"Đang thử xóa trưởng nhóm {team1.Leader.FullName}...");
+        team1.removeMember(team1.Leader.Id);
     }
 
     static void RunStep12()
     {
+        if (team1 == null || se2 == null || team1.Leader == null) { Console.WriteLine("Vui lòng chạy đủ Bước 2, 5, 7 trước!"); return; }
         Console.WriteLine("--- BƯỚC 12: ĐỔI TRƯỞNG NHÓM RỒI XÓA CỰU TRƯỞNG NHÓM ---");
-        ProjectTeam? team = SelectTeam("Chọn nhóm dự án");
-        if (team == null) return;
-
-        if (team.Leader == null)
-        {
-            Console.WriteLine("Nhóm này chưa có trưởng nhóm cũ để đổi. Hãy chạy Bước 7 trước!");
-            return;
-        }
-        
-        Employee? newLeader = SelectEmployee("Chọn nhân sự thay thế làm trưởng nhóm MỚI");
-        if (newLeader == null) return;
-
-        string oldLeaderId = team.Leader.Id;
-        Console.WriteLine($"\n1. Đổi trưởng nhóm sang {newLeader.FullName}...");
-        team.changeLeader(newLeader);
+        string oldLeaderId = team1.Leader.Id;
+        Console.WriteLine($"1. Đổi trưởng nhóm sang {se2.FullName}...");
+        team1.changeLeader(se2);
         Console.WriteLine($"2. Xóa cựu trưởng nhóm có ID {oldLeaderId}...");
-        team.removeMember(oldLeaderId);
-        Console.WriteLine("\nKết quả nhóm hiện tại:");
-        team.displayTeam();
+        team1.removeMember(oldLeaderId);
+        Console.WriteLine("Kết quả nhóm hiện tại:");
+        team1.displayTeam();
     }
 
     static void RunStep13()
     {
-        Console.WriteLine("--- BƯỚC 13: TẠO NHÓM MỚI VÀ CHIA SẺ THÀNH VIÊN ---");
-        Employee? target = SelectEmployee("Chọn nhân sự muốn chia sẻ cho dự án mới này");
-        if (target == null) return;
-        
-        sharedEmpForStep15 = target;
-
-        Console.WriteLine("\nĐang tạo nhóm mới và đưa nhân sự này vào...");
-        string code = GetInput("Nhập mã dự án", $"P{allTeams.Count + 1:000}");
-        string name = GetInput("Nhập tên dự án", "Dự án Beta (Chia sẻ)");
-        
-        ProjectTeam team2 = new ProjectTeam(code, name, target);
-        allTeams.Add(team2);
-        
+        if (emp1 == null) { Console.WriteLine("Vui lòng chạy Bước 1 trước!"); return; }
+        Console.WriteLine("--- BƯỚC 13: TẠO NHÓM THỨ 2 VÀ CHIA SẺ THÀNH VIÊN ---");
+        Console.WriteLine("Đang tạo nhóm Beta và thêm Employee 1 vào...");
+        ProjectTeam team2 = new ProjectTeam("P002", "Dự án Beta", emp1);
+        team2.addMember(new Employee("E003", "Hoang Van E", 1200.0));
         team2.displayTeam();
-        Console.WriteLine($"\nNhân sự {target.Id} hiện đã được dùng chung cho Nhóm mới này (Kết tập - Aggregation).");
+        Console.WriteLine($"Nhân sự {emp1.Id} hiện thuộc cả Nhóm 1 và Nhóm 2 (Kết tập - Aggregation).");
     }
 
     static void RunStep14()
     {
-        Console.WriteLine("--- BƯỚC 14: XÓA HỦY MỘT NHÓM DỰ ÁN ---");
-        ProjectTeam? targetTeam = SelectTeam("Chọn nhóm dự án muốn hủy");
-        if (targetTeam == null) return;
-        
-        allTeams.Remove(targetTeam);
-        Console.WriteLine($"Đã xóa dự án {targetTeam.ProjectName} khỏi danh sách quản lý.");
-        
-        Console.WriteLine("Đang gọi Garbage Collector (Bộ gom rác) để ép hủy đối tượng Team trên RAM...");
+        Console.WriteLine("--- BƯỚC 14: HỦY NHÓM 2 (KẾT THÚC KHỐI LỆNH) ---");
+        Console.WriteLine("Ghi chú: Trong C#, khi thoát khỏi hàm RunStep13, biến team2 đã hết scope.");
+        Console.WriteLine("Đang gọi Garbage Collector (Bộ gom rác) để ép hủy đối tượng team2...");
         GC.Collect();
         GC.WaitForPendingFinalizers();
         Console.WriteLine("Hoàn tất dọn dẹp!");
@@ -691,13 +530,9 @@ public class Program
 
     static void RunStep15()
     {
-        if (sharedEmpForStep15 == null) 
-        { 
-            Console.WriteLine("Vui lòng chạy Bước 13 trước để đánh dấu nhân sự được chia sẻ!"); 
-            return; 
-        }
-        Console.WriteLine("--- BƯỚC 15: KIỂM TRA NHÂN SỰ SAU KHI NHÓM BỊ HỦY ---");
-        Console.WriteLine("Mặc dù nhóm chứa nhân sự này có thể đã bị xóa ở Bước 14, bản thân nhân sự vẫn tồn tại độc lập:");
-        sharedEmpForStep15.displayInfo();
+        if (emp1 == null) { Console.WriteLine("Vui lòng chạy Bước 1 trước!"); return; }
+        Console.WriteLine("--- BƯỚC 15: KIỂM TRA NHÂN SỰ SAU KHI NHÓM 2 BỊ HỦY ---");
+        Console.WriteLine("Mặc dù nhóm 2 đã bị hủy, Employee 1 vẫn tồn tại độc lập:");
+        emp1.displayInfo();
     }
 }
